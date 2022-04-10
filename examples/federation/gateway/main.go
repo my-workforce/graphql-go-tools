@@ -41,7 +41,7 @@ func startServer() {
 	upgrader.Header.Add("Sec-Websocket-Protocol", "graphql-ws")
 
 	graphqlEndpoint := "/graphql/"
-	playgroundURLPrefix := "/graphql/"
+	playgroundURLPrefix := "/graphql/playground/"
 	playgroundURL := ""
 
 	httpClient := http.DefaultClient
