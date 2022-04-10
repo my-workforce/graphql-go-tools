@@ -3,6 +3,7 @@ package http
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 
 	log "github.com/jensneuse/abstractlogger"
@@ -29,7 +30,10 @@ func (g *GraphQLHTTPRequestHandler) handleHTTP(w http.ResponseWriter, r *http.Re
 	resultWriter := graphql.NewEngineResultWriterFromBuffer(buf)
 	if err = g.engine.Execute(r.Context(), &gqlRequest, &resultWriter); err != nil {
 		g.log.Error("engine.Execute", log.Error(err))
-		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Add(httpHeaderContentType, httpContentTypeApplicationJson)
+		w.WriteHeader(http.StatusBadRequest)
+		result, _ := json.Marshal(err)
+		w.Write(result)
 		return
 	}
 
