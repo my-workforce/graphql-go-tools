@@ -81,9 +81,9 @@ func startServer() {
 
 	gateway.Ready()
 
-	mux.Handle("/query", gateway)
+	mux.Handle("/graphql/", gateway)
 
-	addr := "0.0.0.0:4000"
+	addr := "0.0.0.0:80"
 	logger.Info("Listening",
 		log.String("add", addr),
 	)
