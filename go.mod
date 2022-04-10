@@ -85,4 +85,3 @@ require (
 
 replace github.com/jensneuse/graphql-go-tools/examples/federation => ./examples/federation
 
-replace github.com/jensneuse/graphql-go-tools/examples/chat => ./examples/chat
