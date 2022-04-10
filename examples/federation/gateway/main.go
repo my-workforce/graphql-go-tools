@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
-	"time"
-
 	"github.com/gobwas/ws"
 	log "github.com/jensneuse/abstractlogger"
 	"go.uber.org/zap"
+	"net"
+	"net/http"
+	Url "net/url"
+	"os"
+	"strings"
 
 	"github.com/jensneuse/graphql-go-tools/pkg/graphql"
 	"github.com/jensneuse/graphql-go-tools/pkg/playground"
@@ -48,12 +49,8 @@ func startServer() {
 	mux := http.NewServeMux()
 
 	datasourceWatcher := NewDatasourcePoller(httpClient, DatasourcePollerConfig{
-		Services: []ServiceConfig{
-			{Name: "accounts", URL: "http://localhost:4001/query"},
-			{Name: "products", URL: "http://localhost:4002/query", WS: "ws://localhost:4002/query"},
-			{Name: "reviews", URL: "http://localhost:4003/query"},
-		},
-		PollingInterval: 30 * time.Second,
+		Services: getServicesUrlsFromEnv(),
+		//PollingInterval: 30 * time.Second,
 	})
 
 	p := playground.New(playground.Config{
@@ -98,6 +95,28 @@ func startServer() {
 
 func prettyAddr(addr string) string {
 	return strings.Replace(addr, "0.0.0.0", "localhost", -1)
+}
+
+func getServicesUrlsFromEnv() []ServiceConfig {
+	var servicesUrls []ServiceConfig
+	for _, e := range os.Environ() {
+		pair := strings.SplitN(e, "=", 2)
+		if strings.HasPrefix(pair[0], "URL_") {
+			u, err := Url.Parse(pair[1])
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			host, _, _ := net.SplitHostPort(u.Host)
+			servicesUrls = append(servicesUrls, ServiceConfig{
+				Name: host,
+				URL:  pair[1],
+				WS:   strings.Replace(pair[1], "http", "ws", 1),
+			})
+		}
+	}
+
+	return servicesUrls
 }
 
 func main() {
