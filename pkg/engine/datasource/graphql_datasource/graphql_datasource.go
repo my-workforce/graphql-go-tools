@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/jensneuse/graphql-go-tools/pkg/utils"
 	"io"
 	"net/http"
 
@@ -1248,26 +1249,16 @@ func (s *SubscriptionSource) Start(ctx context.Context, input []byte, next chan<
 		return resolve.ErrUnableToResolve
 	}
 
-	options = addAuthHeader(options)
+	options = AddAuthHeader(options)
 
 	return s.client.Subscribe(ctx, options, next)
 }
 
-func addAuthHeader(gqlOption GraphQLSubscriptionOptions) GraphQLSubscriptionOptions {
-	type Variables struct {
-		Token string `json:"token"`
-	}
-	var UnmarshalledVariables Variables
-	err := json.Unmarshal(gqlOption.Body.Variables, &UnmarshalledVariables)
-	if err != nil {
-		println(err.Error())
-		return gqlOption
-	}
-
+func AddAuthHeader(gqlOption GraphQLSubscriptionOptions) GraphQLSubscriptionOptions {
 	if gqlOption.Header == nil {
 		gqlOption.Header = http.Header{}
 	}
-	gqlOption.Header.Set("Authorization", "JWT "+UnmarshalledVariables.Token)
+	gqlOption.Header.Set("Authorization", utils.GetAuthHeaderFromGqlOperationVariables(gqlOption.Body.Variables))
 
 	return gqlOption
 }

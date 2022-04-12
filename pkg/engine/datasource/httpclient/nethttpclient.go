@@ -5,6 +5,8 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"context"
+	"github.com/jensneuse/graphql-go-tools/pkg/engine/resolve"
+	"github.com/jensneuse/graphql-go-tools/pkg/utils"
 	"io"
 	"net/http"
 	"time"
@@ -57,6 +59,18 @@ func Do(client *http.Client, ctx context.Context, requestInput []byte, out io.Wr
 		})
 		if err != nil {
 			return err
+		}
+	}
+
+	switch ctx := ctx.(type) {
+	case *resolve.Context:
+		authHeader := ctx.Request.Header.Get("Authorization")
+		if len(authHeader) == 0 {
+			authHeader = utils.GetAuthHeaderFromGqlOperationVariables(ctx.Variables)
+		}
+
+		if len(authHeader) != 0 {
+			request.Header.Add("Authorization", authHeader)
 		}
 	}
 
