@@ -3,16 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"strings"
-	"time"
-
 	"github.com/gobwas/ws"
 	log "github.com/jensneuse/abstractlogger"
-	"go.uber.org/zap"
-
 	"github.com/jensneuse/graphql-go-tools/pkg/graphql"
 	"github.com/jensneuse/graphql-go-tools/pkg/playground"
+	"go.uber.org/zap"
+	"net/http"
+	"strings"
 
 	http2 "github.com/jensneuse/graphql-go-tools/examples/federation/gateway/http"
 )
@@ -49,7 +46,7 @@ func startServer() {
 
 	datasourceWatcher := NewDatasourcePoller(httpClient, DatasourcePollerConfig{
 		Services:        getServicesUralsFromEnvironment(),
-		PollingInterval: 30 * time.Second,
+		PollingInterval: getSchemaPollInterval(),
 	})
 
 	p := playground.New(playground.Config{

@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	connectionInitMessage = []byte(`{"type":"connection_init"}`)
+	connectionInitMessage = `{"type":"connection_init","payload":{"Authorization": "%s"}}`
 )
 
 const (
@@ -128,7 +128,8 @@ func (c *WebSocketGraphQLSubscriptionClient) Subscribe(ctx context.Context, opti
 		return fmt.Errorf("upgrade unsuccessful")
 	}
 	// init + ack
-	err = conn.Write(ctx, websocket.MessageText, connectionInitMessage)
+	initRequest := fmt.Sprintf(connectionInitMessage, options.Header.Get("Authorization"))
+	err = conn.Write(ctx, websocket.MessageText, []byte(initRequest))
 	if err != nil {
 		return err
 	}

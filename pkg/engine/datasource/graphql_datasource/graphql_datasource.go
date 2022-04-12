@@ -1157,7 +1157,7 @@ type Source struct {
 }
 
 func (s *Source) compactAndUnNullVariables(input []byte) []byte {
-	variables, _, _, err := jsonparser.Get(input, "body","variables")
+	variables, _, _, err := jsonparser.Get(input, "body", "variables")
 	if err != nil {
 		return input
 	}
@@ -1179,7 +1179,7 @@ func (s *Source) compactAndUnNullVariables(input []byte) []byte {
 			break
 		}
 	}
-	input, _ = jsonparser.Set(input, variables, "body","variables")
+	input, _ = jsonparser.Set(input, variables, "body", "variables")
 	return input
 }
 
@@ -1247,5 +1247,27 @@ func (s *SubscriptionSource) Start(ctx context.Context, input []byte, next chan<
 	if options.Body.Query == "" {
 		return resolve.ErrUnableToResolve
 	}
+
+	options = addAuthHeader(options)
+
 	return s.client.Subscribe(ctx, options, next)
+}
+
+func addAuthHeader(gqlOption GraphQLSubscriptionOptions) GraphQLSubscriptionOptions {
+	type Variables struct {
+		Token string `json:"token"`
+	}
+	var UnmarshalledVariables Variables
+	err := json.Unmarshal(gqlOption.Body.Variables, &UnmarshalledVariables)
+	if err != nil {
+		println(err.Error())
+		return gqlOption
+	}
+
+	if gqlOption.Header == nil {
+		gqlOption.Header = http.Header{}
+	}
+	gqlOption.Header.Set("Authorization", "JWT "+UnmarshalledVariables.Token)
+
+	return gqlOption
 }
