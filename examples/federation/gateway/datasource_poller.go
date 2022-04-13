@@ -113,6 +113,8 @@ func (d *DatasourcePollerPoller) updateSDLs(ctx context.Context) {
 				return
 			}
 
+			sdl = strings.Replace(sdl, "directive @connection on OBJECT", "", 1)
+
 			select {
 			case <-ctx.Done():
 			case resultCh <- struct {
