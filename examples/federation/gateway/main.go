@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"github.com/gobwas/ws"
 	log "github.com/jensneuse/abstractlogger"
+	http2 "github.com/jensneuse/graphql-go-tools/examples/federation/gateway/http"
 	"github.com/jensneuse/graphql-go-tools/pkg/graphql"
 	"github.com/jensneuse/graphql-go-tools/pkg/playground"
+	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"net/http"
 	"strings"
-
-	http2 "github.com/jensneuse/graphql-go-tools/examples/federation/gateway/http"
 )
 
 // It's just a simple example of graphql federation gateway server, it's NOT a production ready code.
@@ -78,6 +78,7 @@ func startServer() {
 	gateway.Ready()
 
 	mux.Handle("/graphql/", gateway)
+	handler := cors.AllowAll().Handler(mux)
 
 	addr := "0.0.0.0:80"
 	logger.Info("Listening",
@@ -85,7 +86,7 @@ func startServer() {
 	)
 	fmt.Printf("Access Playground on: http://%s%s%s\n", prettyAddr(addr), playgroundURLPrefix, playgroundURL)
 	logger.Fatal("failed listening",
-		log.Error(http.ListenAndServe(addr, mux)),
+		log.Error(http.ListenAndServe(addr, handler)),
 	)
 }
 
