@@ -18,5 +18,5 @@ RUN go get github.com/jensneuse/graphql-go-tools/pkg/engine/datasource/httpclien
 
 RUN go build -o /tmp/srv-gateway ./gateway
 
-EXPOSE 80
+EXPOSE 4000
 CMD ["/tmp/srv-gateway"]

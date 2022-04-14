@@ -80,7 +80,7 @@ func startServer() {
 	mux.Handle("/graphql/", gateway)
 	handler := cors.AllowAll().Handler(mux)
 
-	addr := "0.0.0.0:80"
+	addr := "0.0.0.0:4000"
 	logger.Info("Listening",
 		log.String("add", addr),
 	)
