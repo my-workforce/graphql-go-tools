@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	log "github.com/jensneuse/abstractlogger"
+	"net"
 	Url "net/url"
 	"os"
 	"strconv"
@@ -22,8 +23,10 @@ func getServicesUralsFromEnvironment() []ServiceConfig {
 				log.Error(err)
 				continue
 			}
+			host, _, _ := net.SplitHostPort(u.Host)
+
 			serviceUrlConf := ServiceConfig{
-				Name: u.Path,
+				Name: urlPairs[0] + "_" + host,
 				URL:  urlPairs[1],
 			}
 			if len(ePair) > 1 && ePair[1] == "ws=true" {
