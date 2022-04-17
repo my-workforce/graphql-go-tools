@@ -3,7 +3,7 @@ module github.com/jensneuse/graphql-go-tools/examples/federation
 go 1.15
 
 require (
-	github.com/gobwas/ws v1.0.4
+	github.com/gobwas/ws v1.1.0
 	github.com/jensneuse/abstractlogger v0.0.4
 	github.com/jensneuse/graphql-go-tools v1.20.2
 	github.com/nats-io/nats-server/v2 v2.3.2 // indirect

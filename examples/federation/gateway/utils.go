@@ -1,8 +1,8 @@
 package main
 
 import (
+	"encoding/json"
 	log "github.com/jensneuse/abstractlogger"
-	"net"
 	Url "net/url"
 	"os"
 	"strconv"
@@ -16,19 +16,14 @@ func getServicesUralsFromEnvironment() []ServiceConfig {
 		ePair := strings.SplitN(e, ";", 2)
 		urlPairs := strings.SplitN(ePair[0], "=", 2)
 		if strings.HasPrefix(urlPairs[0], "URL_") {
+			println(e)
 			u, err := Url.Parse(urlPairs[1])
 			if err != nil {
 				log.Error(err)
 				continue
 			}
-			host, _, _ := net.SplitHostPort(u.Host)
-
-			if host == "localhost" || host == "127.0.0.1" {
-				host = urlPairs[0] + "_" + host
-			}
-
 			serviceUrlConf := ServiceConfig{
-				Name: host,
+				Name: u.Path,
 				URL:  urlPairs[1],
 			}
 			if len(ePair) > 1 && ePair[1] == "ws=true" {
@@ -41,6 +36,10 @@ func getServicesUralsFromEnvironment() []ServiceConfig {
 	if len(servicesUrls) == 0 {
 		logger().Warn("no services found in env vas")
 	}
+
+	services, _ := json.Marshal(servicesUrls)
+	println("servicesUrls => ", string(services))
+
 	return servicesUrls
 }
 
