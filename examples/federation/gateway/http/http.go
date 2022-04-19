@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	log "github.com/jensneuse/abstractlogger"
 
@@ -33,7 +34,14 @@ func (g *GraphQLHTTPRequestHandler) handleHTTP(w http.ResponseWriter, r *http.Re
 		w.Header().Add(httpHeaderContentType, httpContentTypeApplicationJson)
 		w.WriteHeader(http.StatusBadRequest)
 		result, _ := json.Marshal(err)
-		w.Write(result)
+		if len(result) != 0 && string(result) != "{}" {
+			w.Write(result)
+		} else {
+			message := `{"Errors": [{"message": "` + strings.ReplaceAll(err.Error(), `"`, "") + `"}]}`
+			println(message)
+			w.Write([]byte(message))
+		}
+
 		return
 	}
 
