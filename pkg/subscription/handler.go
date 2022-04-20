@@ -26,7 +26,7 @@ const (
 	MessageTypeError               = "error"
 	MessageTypeComplete            = "complete"
 
-	DefaultKeepAliveInterval          = "1s"
+	DefaultKeepAliveInterval          = "15s"
 	DefaultSubscriptionUpdateInterval = "1s"
 )
 
