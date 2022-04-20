@@ -72,6 +72,11 @@ func Do(client *http.Client, ctx context.Context, requestInput []byte, out io.Wr
 		if len(authHeader) != 0 {
 			request.Header.Add("Authorization", authHeader)
 		}
+
+		acceptLanguageHeader := ctx.Request.Header.Get("Accept-Language")
+		if len(acceptLanguageHeader) != 0 {
+			request.Header.Add("Accept-Language", acceptLanguageHeader)
+		}
 	}
 
 	if queryParams != nil {
