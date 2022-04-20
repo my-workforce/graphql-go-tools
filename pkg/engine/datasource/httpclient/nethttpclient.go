@@ -99,6 +99,10 @@ func Do(client *http.Client, ctx context.Context, requestInput []byte, out io.Wr
 	case *resolve.Context:
 		if ctx.Request.IsMultiPart {
 			request, _ = http.NewRequestWithContext(ctx, string(method), string(url), bytes.NewReader(ctx.Request.MultiPartRequestBytes))
+			contentTypeHeader := ctx.Request.Header.Get("Content-Type")
+			if len(contentTypeHeader) != 0 {
+				request.Header.Add("Content-Type", contentTypeHeader)
+			}
 		}
 
 		authHeader := ctx.Request.Header.Get("Authorization")
@@ -114,12 +118,6 @@ func Do(client *http.Client, ctx context.Context, requestInput []byte, out io.Wr
 		if len(acceptLanguageHeader) != 0 {
 			request.Header.Add("Accept-Language", acceptLanguageHeader)
 		}
-
-		contentTypeHeader := ctx.Request.Header.Get("Content-Type")
-		if len(contentTypeHeader) != 0 {
-			request.Header.Add("Content-Type", contentTypeHeader)
-		}
-
 	}
 
 	response, err := client.Do(request)
