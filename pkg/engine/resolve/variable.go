@@ -44,7 +44,9 @@ func (r *JSONVariableRenderer) RenderVariable(ctx context.Context, data []byte, 
 	if r.validator != nil {
 		err := r.validator.Validate(ctx, data)
 		if err != nil {
-			return fmt.Errorf("could not render JSON variable, %w", err)
+			// TODO [MOA] enable this when validation message fixed
+			println(fmt.Errorf("could not render JSON variable, %w", err).Error())
+			//return fmt.Errorf("could not render JSON variable, %w", err)
 		}
 	}
 	_, err := out.Write(data)
