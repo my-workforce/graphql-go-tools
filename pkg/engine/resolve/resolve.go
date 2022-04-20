@@ -133,7 +133,9 @@ type Context struct {
 }
 
 type Request struct {
-	Header http.Header
+	Header                http.Header
+	IsMultiPart           bool
+	MultiPartRequestBytes []byte
 }
 
 func NewContext(ctx context.Context) *Context {

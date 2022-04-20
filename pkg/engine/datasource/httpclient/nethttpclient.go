@@ -62,23 +62,6 @@ func Do(client *http.Client, ctx context.Context, requestInput []byte, out io.Wr
 		}
 	}
 
-	switch ctx := ctx.(type) {
-	case *resolve.Context:
-		authHeader := ctx.Request.Header.Get("Authorization")
-		if len(authHeader) == 0 {
-			authHeader = utils.GetAuthHeaderFromGqlOperationVariables(ctx.Variables)
-		}
-
-		if len(authHeader) != 0 {
-			request.Header.Add("Authorization", authHeader)
-		}
-
-		acceptLanguageHeader := ctx.Request.Header.Get("Accept-Language")
-		if len(acceptLanguageHeader) != 0 {
-			request.Header.Add("Accept-Language", acceptLanguageHeader)
-		}
-	}
-
 	if queryParams != nil {
 		query := request.URL.Query()
 		_, err = jsonparser.ArrayEach(queryParams, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -111,6 +94,33 @@ func Do(client *http.Client, ctx context.Context, requestInput []byte, out io.Wr
 
 	request.Header.Add("accept", "application/json")
 	request.Header.Add("content-type", "application/json")
+
+	switch ctx := ctx.(type) {
+	case *resolve.Context:
+		if ctx.Request.IsMultiPart {
+			request, _ = http.NewRequestWithContext(ctx, string(method), string(url), bytes.NewReader(ctx.Request.MultiPartRequestBytes))
+		}
+
+		authHeader := ctx.Request.Header.Get("Authorization")
+		if len(authHeader) == 0 {
+			authHeader = utils.GetAuthHeaderFromGqlOperationVariables(ctx.Variables)
+		}
+
+		if len(authHeader) != 0 {
+			request.Header.Add("Authorization", authHeader)
+		}
+
+		acceptLanguageHeader := ctx.Request.Header.Get("Accept-Language")
+		if len(acceptLanguageHeader) != 0 {
+			request.Header.Add("Accept-Language", acceptLanguageHeader)
+		}
+
+		contentTypeHeader := ctx.Request.Header.Get("Content-Type")
+		if len(contentTypeHeader) != 0 {
+			request.Header.Add("Content-Type", contentTypeHeader)
+		}
+
+	}
 
 	response, err := client.Do(request)
 	if err != nil {

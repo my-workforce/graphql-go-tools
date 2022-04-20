@@ -1,11 +1,13 @@
 package graphql
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/jensneuse/graphql-go-tools/pkg/ast"
 	"github.com/jensneuse/graphql-go-tools/pkg/astparser"
@@ -61,6 +63,23 @@ func UnmarshalRequest(reader io.Reader, request *Request) error {
 
 func UnmarshalHttpRequest(r *http.Request, request *Request) error {
 	request.request.Header = r.Header
+
+	isUpload := strings.HasPrefix(r.Header.Get("Content-Type"), "multipart")
+	if isUpload {
+		request.request.IsMultiPart = true
+		body, _ := ioutil.ReadAll(r.Body)
+		r2 := r.Clone(r.Context())
+		r.Body = ioutil.NopCloser(bytes.NewReader(body))
+		r2.Body = ioutil.NopCloser(bytes.NewReader(body))
+		request.request.MultiPartRequestBytes = body
+		err := r2.ParseMultipartForm(2048)
+		if err != nil {
+			return err
+		}
+		requestOperation := json.Unmarshal([]byte(r2.MultipartForm.Value["operations"][0]), &request)
+
+		return requestOperation
+	}
 	return UnmarshalRequest(r.Body, request)
 }
 
