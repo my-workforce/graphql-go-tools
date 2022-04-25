@@ -29,8 +29,10 @@ func getServicesUralsFromEnvironment() []ServiceConfig {
 				Name: urlPairs[0] + "_" + host,
 				URL:  urlPairs[1],
 			}
-			if len(ePair) > 1 && ePair[1] == "ws=true" {
-				serviceUrlConf.WS = strings.Replace(urlPairs[1], "http", "ws", 1)
+			if len(ePair) > 1 && strings.HasPrefix(ePair[1], "ws=") {
+				wsUrl := strings.Replace(urlPairs[1], "http", "ws", 1)
+				wsUrl = strings.Replace(wsUrl, "graphql", strings.SplitN(ePair[1], "=", 2)[1], 1)
+				serviceUrlConf.WS = wsUrl
 			}
 
 			servicesUrls = append(servicesUrls, serviceUrlConf)
