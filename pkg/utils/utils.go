@@ -7,7 +7,7 @@ import (
 
 func GetAuthHeaderFromGqlOperationVariables(variables json.RawMessage) string {
 	type Variables struct {
-		Token string `json:"token"`
+		Token string `json:"authToken"`
 	}
 	var UnmarshalledVariables Variables
 	err := json.Unmarshal(variables, &UnmarshalledVariables)
