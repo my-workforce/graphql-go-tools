@@ -1215,7 +1215,7 @@ func (s *Source) unNullVariables(input []byte) ([]byte, bool) {
 }
 
 func (s *Source) Load(ctx context.Context, input []byte, writer io.Writer) (err error) {
-	input = s.compactAndUnNullVariables(input)
+	//input = s.compactAndUnNullVariables(input)
 	return httpclient.Do(s.httpClient, ctx, input, writer)
 }
 
