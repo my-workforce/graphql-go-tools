@@ -9,11 +9,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/jensneuse/graphql-go-tools/pkg/ast"
-	"github.com/jensneuse/graphql-go-tools/pkg/astparser"
-	"github.com/jensneuse/graphql-go-tools/pkg/engine/resolve"
-	"github.com/jensneuse/graphql-go-tools/pkg/middleware/operation_complexity"
-	"github.com/jensneuse/graphql-go-tools/pkg/operationreport"
+	"github.com/wundergraph/graphql-go-tools/pkg/ast"
+	"github.com/wundergraph/graphql-go-tools/pkg/astparser"
+	"github.com/wundergraph/graphql-go-tools/pkg/engine/resolve"
+	"github.com/wundergraph/graphql-go-tools/pkg/middleware/operation_complexity"
+	"github.com/wundergraph/graphql-go-tools/pkg/operationreport"
 )
 
 const (
