@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jensneuse/graphql-go-tools/pkg/utils"
+	"github.com/wundergraph/graphql-go-tools/pkg/utils"
 	"io"
 	"net/http"
 
@@ -224,6 +224,12 @@ type FetchConfiguration struct {
 func (c *Configuration) ApplyDefaults() {
 	if c.Fetch.Method == "" {
 		c.Fetch.Method = "POST"
+	}
+	if c.Fetch.Header == nil {
+		c.Fetch.Header = http.Header{
+			"Authorization":   []string{"{{ .request.headers.Authorization }}"},
+			"Accept-Language": []string{"{{ .request.headers.Accept-Language }}"},
+		}
 	}
 }
 

@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gobwas/ws"
 	log "github.com/jensneuse/abstractlogger"
-	"go.uber.org/zap"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 
 	"github.com/wundergraph/graphql-go-tools/pkg/graphql"
 	"github.com/wundergraph/graphql-go-tools/pkg/playground"

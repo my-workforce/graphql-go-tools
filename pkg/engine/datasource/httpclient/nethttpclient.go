@@ -5,8 +5,7 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"context"
-	"github.com/jensneuse/graphql-go-tools/pkg/engine/resolve"
-	"github.com/jensneuse/graphql-go-tools/pkg/utils"
+	"github.com/wundergraph/graphql-go-tools/pkg/engine/resolve"
 	"io"
 	"net/http"
 	"time"
@@ -103,20 +102,6 @@ func Do(client *http.Client, ctx context.Context, requestInput []byte, out io.Wr
 			if len(contentTypeHeader) != 0 {
 				request.Header.Add("Content-Type", contentTypeHeader)
 			}
-		}
-
-		authHeader := ctx.Request.Header.Get("Authorization")
-		if len(authHeader) == 0 {
-			authHeader = utils.GetAuthHeaderFromGqlOperationVariables(ctx.Variables)
-		}
-
-		if len(authHeader) != 0 {
-			request.Header.Add("Authorization", authHeader)
-		}
-
-		acceptLanguageHeader := ctx.Request.Header.Get("Accept-Language")
-		if len(acceptLanguageHeader) != 0 {
-			request.Header.Add("Accept-Language", acceptLanguageHeader)
 		}
 	}
 
