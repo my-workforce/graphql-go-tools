@@ -97,7 +97,9 @@ func Do(client *http.Client, ctx context.Context, requestInput []byte, out io.Wr
 	switch ctx := ctx.(type) {
 	case *resolve.Context:
 		if ctx.Request.IsMultiPart {
+			headers := request.Header
 			request, _ = http.NewRequestWithContext(ctx, string(method), string(url), bytes.NewReader(ctx.Request.MultiPartRequestBytes))
+			request.Header = headers
 			contentTypeHeader := ctx.Request.Header.Get("Content-Type")
 			if len(contentTypeHeader) != 0 {
 				request.Header.Add("Content-Type", contentTypeHeader)
