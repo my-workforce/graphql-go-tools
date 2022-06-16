@@ -102,7 +102,7 @@ func Do(client *http.Client, ctx context.Context, requestInput []byte, out io.Wr
 			request.Header = headers
 			contentTypeHeader := ctx.Request.Header.Get("Content-Type")
 			if len(contentTypeHeader) != 0 {
-				request.Header.Add("Content-Type", contentTypeHeader)
+				request.Header.Set("Content-Type", contentTypeHeader)
 			}
 		}
 	}
