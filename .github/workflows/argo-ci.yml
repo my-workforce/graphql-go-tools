@@ -1,0 +1,60 @@
+# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
+# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
+
+name: Maven Package
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ created ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and push container
+        run: |
+          docker login dxb.ocir.io -u ${{ secrets.DOCKER_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+          docker build -f Dockerfile -t dxb.ocir.io/axjdg8m7rpbd/wunder-graph:${{ github.sha }} .
+          docker push dxb.ocir.io/axjdg8m7rpbd/wunder-graph:${{ github.sha }}
+          docker build -f Dockerfile -t dxb.ocir.io/axjdg8m7rpbd/wunder-graph:latest .
+          docker push dxb.ocir.io/axjdg8m7rpbd/wunder-graph:latest
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          token: ${{ secrets.GIT_TOKEN }}
+          repository: my-workforce/Kubernetes
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v1
+        with:
+          kustomize-version: "3.6.1"
+
+      - name: Update Kubernetes resources
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+        run: |
+          cd wunder-graph/dev
+          kustomize edit set image wunder-graph=dxb.ocir.io/axjdg8m7rpbd/wunder-graph:$GITHUB_SHA
+          cat kustomization.yaml
+
+      - name: Commit files
+        run: |
+          git config --local user.email "ajadaa@i3hub.com"
+          git config --local user.name "Ajadaa"
+          git commit -am "Bump docker tag"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          repository: my-workforce/Kubernetes
+          github_token: ${{ secrets.GIT_TOKEN }}
+          branch: main
