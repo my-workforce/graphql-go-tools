@@ -39,7 +39,7 @@ type uniqueFieldDefinitionNamesVisitor struct {
 	usedFieldNames      map[uint64]hashedFieldNames // map of hashed type names containing a map of hashed field names
 }
 
-func (u *uniqueFieldDefinitionNamesVisitor) EnterDocument(operation, definition *ast.Document) {
+func (u *uniqueFieldDefinitionNamesVisitor) EnterDocument(operation, _ *ast.Document) {
 	u.definition = operation
 	u.currentTypeName = u.currentTypeName[:0]
 	u.currentTypeNameHash = 0
@@ -66,7 +66,7 @@ func (u *uniqueFieldDefinitionNamesVisitor) EnterObjectTypeDefinition(ref int) {
 	u.setCurrentTypeName(typeName, ast.NodeKindObjectTypeDefinition)
 }
 
-func (u *uniqueFieldDefinitionNamesVisitor) LeaveObjectTypeDefinition(ref int) {
+func (u *uniqueFieldDefinitionNamesVisitor) LeaveObjectTypeDefinition(_ int) {
 	u.unsetCurrentTypeName()
 }
 
@@ -75,7 +75,7 @@ func (u *uniqueFieldDefinitionNamesVisitor) EnterObjectTypeExtension(ref int) {
 	u.setCurrentTypeName(typeName, ast.NodeKindObjectTypeExtension)
 }
 
-func (u *uniqueFieldDefinitionNamesVisitor) LeaveObjectTypeExtension(ref int) {
+func (u *uniqueFieldDefinitionNamesVisitor) LeaveObjectTypeExtension(_ int) {
 	u.unsetCurrentTypeName()
 }
 
@@ -84,7 +84,7 @@ func (u *uniqueFieldDefinitionNamesVisitor) EnterInterfaceTypeDefinition(ref int
 	u.setCurrentTypeName(typeName, ast.NodeKindInterfaceTypeDefinition)
 }
 
-func (u *uniqueFieldDefinitionNamesVisitor) LeaveInterfaceTypeDefinition(ref int) {
+func (u *uniqueFieldDefinitionNamesVisitor) LeaveInterfaceTypeDefinition(_ int) {
 	u.unsetCurrentTypeName()
 }
 
@@ -93,16 +93,16 @@ func (u *uniqueFieldDefinitionNamesVisitor) EnterInterfaceTypeExtension(ref int)
 	u.setCurrentTypeName(typeName, ast.NodeKindInterfaceTypeExtension)
 }
 
-func (u *uniqueFieldDefinitionNamesVisitor) LeaveInterfaceTypeExtension(ref int) {
+func (u *uniqueFieldDefinitionNamesVisitor) LeaveInterfaceTypeExtension(_ int) {
 	u.unsetCurrentTypeName()
 }
 
 func (u *uniqueFieldDefinitionNamesVisitor) EnterInputObjectTypeDefinition(ref int) {
 	typeName := u.definition.InputObjectTypeDefinitionNameBytes(ref)
-	u.setCurrentTypeName(typeName, ast.NodeKindObjectTypeDefinition)
+	u.setCurrentTypeName(typeName, ast.NodeKindInputObjectTypeDefinition)
 }
 
-func (u *uniqueFieldDefinitionNamesVisitor) LeaveInputObjectTypeDefinition(ref int) {
+func (u *uniqueFieldDefinitionNamesVisitor) LeaveInputObjectTypeDefinition(_ int) {
 	u.unsetCurrentTypeName()
 }
 
@@ -111,7 +111,7 @@ func (u *uniqueFieldDefinitionNamesVisitor) EnterInputObjectTypeExtension(ref in
 	u.setCurrentTypeName(typeName, ast.NodeKindInputObjectTypeExtension)
 }
 
-func (u *uniqueFieldDefinitionNamesVisitor) LeaveInputObjectTypeExtension(ref int) {
+func (u *uniqueFieldDefinitionNamesVisitor) LeaveInputObjectTypeExtension(_ int) {
 	u.unsetCurrentTypeName()
 }
 
@@ -132,7 +132,7 @@ func (u *uniqueFieldDefinitionNamesVisitor) unsetCurrentTypeName() {
 }
 
 func (u *uniqueFieldDefinitionNamesVisitor) checkField(fieldName ast.ByteSlice) {
-	if bytes.HasPrefix(fieldName, []byte("__")) { // don't validate graphql reserved fields
+	if bytes.HasPrefix(fieldName, reservedFieldPrefix) { // don't validate graphql reserved fields
 		return
 	}
 

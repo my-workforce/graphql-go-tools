@@ -97,6 +97,14 @@ func TestNormalizeOperation(t *testing.T) {
 					disallowedSecondRootField
 				}`, "", "")
 	})
+	t.Run("inject default", func(t *testing.T) {
+		run(t,
+			injectDefaultValueDefinition, `
+			query{elQuery(input:{fieldB: "dupa"})}`,
+			`query($a: elInput){elQuery(input: $a)}`, "",
+			`{"a":{"fieldB":"dupa","fieldA":"VALUE_A"}}`,
+		)
+	})
 	t.Run("fragments", func(t *testing.T) {
 		run(t, testDefinition, `
 				query conflictingBecauseAlias ($unused: String) {
@@ -215,7 +223,7 @@ func TestNormalizeOperation(t *testing.T) {
 	t.Run("input list coercion inline", func(t *testing.T) {
 		run(t, inputCoercionForListDefinition, `
 			query Foo {
-			  inputWithList(input: {list:{foo:"bar",input:{foo:"bar2",input:{nested:{foo:"bar3",list:{foo:"bar4"}}}}}}) {
+			  inputWithList(input: {list:{foo:"bar",list:{foo:"bar2",list:{nested:{foo:"bar3",list:{foo:"bar4"}}}}}}) {
 				id
 				name
 			  }
@@ -224,7 +232,7 @@ func TestNormalizeOperation(t *testing.T) {
 				id
 				name
 			  }
-			}`, `{}`, `{"a":{"list":[{"foo":"bar","input":{"foo":"bar2","input":{"nested":{"foo":"bar3","list":[{"foo":"bar4"}]}}}}]}}`)
+			}`, `{}`, `{"a":{"list":[{"foo":"bar","list":[{"foo":"bar2","list":[{"nested":{"foo":"bar3","list":[{"foo":"bar4"}]}}]}]}]}}`)
 	})
 	t.Run("input list coercion with extracted variables", func(t *testing.T) {
 		run(t, inputCoercionForListDefinition, `
@@ -238,8 +246,8 @@ func TestNormalizeOperation(t *testing.T) {
 				id
 				name
 			  }
-			}`, `{"input":{"list":{"foo":"bar","list":{"foo":"bar2","list":{"nested":{"foo":"bar3","list":{"foo":"bar4"}}}}}}}`,
-			`{"input":{"list":[[{"foo":"bar","list":[[{"foo":"bar2","list":[[{"nested":{"foo":"bar3","list":[[{"foo":"bar4"}]]}}]]}]]}]]}}`)
+			}`, `{"input":{"doubleList":{"foo":"bar","list":{"foo":"bar2","list":{"nested":{"foo":"bar3","list":{"foo":"bar4"}}}}}}}`,
+			`{"input":{"doubleList":[[{"foo":"bar","list":[{"foo":"bar2","list":[{"nested":{"foo":"bar3","list":[{"foo":"bar4"}]}}]}]}]]}}`)
 	})
 }
 
@@ -688,5 +696,24 @@ extend type Mutation {
 }
 extend type Subscription {
 	textCounter: String
+}
+`
+const injectDefaultValueDefinition = `
+type Query {
+  elQuery(input: elInput): Boolean!
+}
+
+type Mutation{
+  elMutation(input: elInput!): Boolean!
+}
+
+input elInput{
+  fieldA: MyEnum! = VALUE_A
+  fieldB: String
+}
+
+enum MyEnum {
+	VALUE_A
+	VALUE_B
 }
 `

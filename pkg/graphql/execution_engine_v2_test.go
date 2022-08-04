@@ -16,10 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	federationExample "github.com/wundergraph/graphql-go-tools/examples/federation"
-	accounts "github.com/wundergraph/graphql-go-tools/examples/federation/accounts/graph"
-	products "github.com/wundergraph/graphql-go-tools/examples/federation/products/graph"
-	reviews "github.com/wundergraph/graphql-go-tools/examples/federation/reviews/graph"
 	"github.com/wundergraph/graphql-go-tools/pkg/engine/datasource/graphql_datasource"
 	"github.com/wundergraph/graphql-go-tools/pkg/engine/datasource/httpclient"
 	"github.com/wundergraph/graphql-go-tools/pkg/engine/datasource/rest_datasource"
@@ -28,6 +24,10 @@ import (
 	"github.com/wundergraph/graphql-go-tools/pkg/engine/resolve"
 	"github.com/wundergraph/graphql-go-tools/pkg/operationreport"
 	"github.com/wundergraph/graphql-go-tools/pkg/starwars"
+	"github.com/wundergraph/graphql-go-tools/pkg/testing/federationtesting"
+	accounts "github.com/wundergraph/graphql-go-tools/pkg/testing/federationtesting/accounts/graph"
+	products "github.com/wundergraph/graphql-go-tools/pkg/testing/federationtesting/products/graph"
+	reviews "github.com/wundergraph/graphql-go-tools/pkg/testing/federationtesting/reviews/graph"
 )
 
 func TestEngineResponseWriter_AsHTTPResponse(t *testing.T) {
@@ -418,14 +418,18 @@ func TestExecutionEngineV2_Execute(t *testing.T) {
 		},
 	))
 
-	t.Run("execute with .object placeholder", runWithoutError(
+	t.Run("execute with .object and .arguments placeholder", runWithoutError(
 		ExecutionEngineV2TestCase{
 			schema: func(t *testing.T) *Schema {
 				t.Helper()
 				schema := `
 					type Query {
-					  getPet(id: ID): Pet
+					  getPet(id: ID, metadata: APIMetadata): Pet
 					  countries: [Country]
+					}
+
+					input APIMetadata {
+						version: String!
 					}
 					
 					type Country {
@@ -451,8 +455,8 @@ func TestExecutionEngineV2_Execute(t *testing.T) {
 				return Request{
 					OperationName: "MyQuery",
 					Query: `
-						query MyQuery {
-						  getPet(id: 1) {
+						query MyQuery($metadata: APIMetadata) {
+						  getPet(id: 1, metadata: $metadata) {
 							id
 							name
 							country {
@@ -461,6 +465,7 @@ func TestExecutionEngineV2_Execute(t *testing.T) {
 						  }
 						}
 					`,
+					Variables: []byte(`{"metadata":{"version":"v2"}}`),
 				}
 			},
 			dataSources: []plan.DataSourceConfiguration{
@@ -476,13 +481,13 @@ func TestExecutionEngineV2_Execute(t *testing.T) {
 							expectedHost:     "petstore.swagger.io",
 							expectedPath:     "/v2/pet/1",
 							expectedBody:     "",
-							sendResponseBody: `{"id":1,"category":{"id":1,"name":"string"},"name":"doggie"}`,
+							sendResponseBody: `{"id":1,"category":{"id":1,"name":"dog"},"name":"doggie"}`,
 							sendStatusCode:   200,
 						}),
 					},
 					Custom: rest_datasource.ConfigJSON(rest_datasource.Configuration{
 						Fetch: rest_datasource.FetchConfiguration{
-							URL:    "https://petstore.swagger.io/v2/pet/{{.arguments.id}}",
+							URL:    "https://petstore.swagger.io/{{.arguments.metadata.version}}/pet/{{.arguments.id}}",
 							Method: "GET",
 						},
 					}),
@@ -497,7 +502,7 @@ func TestExecutionEngineV2_Execute(t *testing.T) {
 					Factory: &rest_datasource.Factory{
 						Client: testNetHttpClient(t, roundTripperTestCase{
 							expectedHost:     "rest-countries.example.com",
-							expectedPath:     "/name/doggie",
+							expectedPath:     "/type/1-dog/name/doggie",
 							expectedBody:     "",
 							sendResponseBody: `{"name":"Germany"}`,
 							sendStatusCode:   200,
@@ -505,7 +510,7 @@ func TestExecutionEngineV2_Execute(t *testing.T) {
 					},
 					Custom: rest_datasource.ConfigJSON(rest_datasource.Configuration{
 						Fetch: rest_datasource.FetchConfiguration{
-							URL:    "https://rest-countries.example.com/name/{{.object.name}}",
+							URL:    "https://rest-countries.example.com/type/{{.object.category.id}}-{{.object.category.name}}/name/{{.object.name}}",
 							Method: "POST",
 						},
 					}),
@@ -520,6 +525,10 @@ func TestExecutionEngineV2_Execute(t *testing.T) {
 					Arguments: []plan.ArgumentConfiguration{
 						{
 							Name:       "id",
+							SourceType: plan.FieldArgumentSource,
+						},
+						{
+							Name:       "metadata",
 							SourceType: plan.FieldArgumentSource,
 						},
 					},
@@ -1281,7 +1290,7 @@ func TestExecutionEngineV2_FederationAndSubscription_IntegrationTest(t *testing.
 			gqlRequest := &Request{
 				OperationName: "",
 				Variables:     nil,
-				Query:         federationExample.QueryReviewsOfMe,
+				Query:         federationtesting.QueryReviewsOfMe,
 			}
 
 			validationResult, err := gqlRequest.ValidateForSchema(schema)
@@ -1343,7 +1352,7 @@ subscription UpdatedPrice {
 
 			if assert.NoError(t, err) {
 				assert.Eventuallyf(t, func() bool {
-					msg := `{"data":{"updatedPrice":{"name":"Trilby","price":%d,"reviews":[{"body":"A highly effective form of birth control.","author":{"id":"1234","username":"User 1234"}}]}}}`
+					msg := `{"data":{"updatedPrice":{"name":"Trilby","price":%d,"reviews":[{"body":"A highly effective form of birth control.","author":{"id":"1234","username":"Me"}}]}}}`
 					price := 10
 					if secondRun {
 						price += 2
@@ -1710,17 +1719,17 @@ func newFederationSetup() *federationSetup {
 }
 
 func newFederationEngine(ctx context.Context, setup *federationSetup, enableDataLoader bool) (engine *ExecutionEngineV2, schema *Schema, err error) {
-	accountsSDL, err := federationExample.LoadSDLFromExamplesDirectoryWithinPkg(federationExample.UpstreamAccounts)
+	accountsSDL, err := federationtesting.LoadSDLFromExamplesDirectoryWithinPkg(federationtesting.UpstreamAccounts)
 	if err != nil {
 		return
 	}
 
-	productsSDL, err := federationExample.LoadSDLFromExamplesDirectoryWithinPkg(federationExample.UpstreamProducts)
+	productsSDL, err := federationtesting.LoadSDLFromExamplesDirectoryWithinPkg(federationtesting.UpstreamProducts)
 	if err != nil {
 		return
 	}
 
-	reviewsSDL, err := federationExample.LoadSDLFromExamplesDirectoryWithinPkg(federationExample.UpstreamReviews)
+	reviewsSDL, err := federationtesting.LoadSDLFromExamplesDirectoryWithinPkg(federationtesting.UpstreamReviews)
 	if err != nil {
 		return
 	}
