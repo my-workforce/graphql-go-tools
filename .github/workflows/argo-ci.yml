@@ -5,11 +5,6 @@ name: Argo Deployment
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  release:
-    types: [ created ]
 
 jobs:
   build:
@@ -22,11 +17,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: Build and push container
         run: |
-          docker login dxb.ocir.io -u ${{ secrets.DOCKER_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
-          docker build -f Dockerfile -t dxb.ocir.io/axjdg8m7rpbd/wunder-graph:${{ github.sha }} .
-          docker push dxb.ocir.io/axjdg8m7rpbd/wunder-graph:${{ github.sha }}
-          docker build -f Dockerfile -t dxb.ocir.io/axjdg8m7rpbd/wunder-graph:latest .
-          docker push dxb.ocir.io/axjdg8m7rpbd/wunder-graph:latest
+          docker login jed.ocir.io -u ${{ secrets.DOCKER_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_REGISTRY_PASSWORD }} 
+          docker build -f Dockerfile -t jed.ocir.io/axjdg8m7rpbd/wunder-graph:${{ github.sha }} .
+          docker push jed.ocir.io/axjdg8m7rpbd/wunder-graph:${{ github.sha }}
       - name: Check out code
         uses: actions/checkout@v3
         with:
@@ -42,8 +35,8 @@ jobs:
         env:
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
         run: |
-          cd wunder-graph/dev
-          kustomize edit set image wunder-graph=dxb.ocir.io/axjdg8m7rpbd/wunder-graph:$GITHUB_SHA
+          cd stg/wunder-graph
+          kustomize edit set image wunder-graph=jed.ocir.io/axjdg8m7rpbd/wunder-graph:$GITHUB_SHA
           cat kustomization.yaml
 
       - name: Commit files
